@@ -1,4 +1,5 @@
 from sys import stdout
+import json
 import tweepy
 import pandas as pd
 import networkx as nx
@@ -94,12 +95,15 @@ def save():
 	global proGraphData
 	global antiGraphData
 	vars = [proData, proGraphData, antiData, antiGraphData]
-	files = ["./proDf.pkl", "./proGraph.pkl", "./antiDf.pkl", "./antiGraph.pkl"]
+	files = ["./proDf.json", "./proGraph.json", "./antiDf.json", "./antiGraph.json"]
 	for i in range(len(vars)):
 		try:
-			vars[i].to_pickle(files[i])
-		except Exception:
-			print(Exception)
+			with open(files[i], 'w') as file:
+				vars[i].to_json(file)
+		except Exception as e:
+			print(type(e))
+			print(e.args)
+			print(e)
 
 	#Applied to dataframes to add liked_by column (users who liked the tweet)
 def get_liked_by(id: str) -> list:
@@ -220,24 +224,27 @@ def draw_histogram(graph: nx.DiGraph, color: str, title: str):
 	ax.set_xticklabels(deg)
 	plt.show()
 
+def present():
+	proGraph = create_graph(proGraphData)
+	antiGraph = create_graph(antiGraphData)
+	clean_graph(proGraph)
+	clean_graph(antiGraph)
+
+	nx.draw(proGraph)
+	plt.show()
+	draw_histogram(proGraph, 'b', "ProVaccine Degree Histogram")
+
+	nx.draw(antiGraph)
+	plt.show()
+	draw_histogram(antiGraph, 'r', "AntiVaccine Degree Histogram")
+
 #Main Code
 init()
-
 proGraph = create_graph(proGraphData)
 antiGraph = create_graph(antiGraphData)
+
 clean_graph(proGraph)
-clean_graph(antiGraph)
-nx.draw(proGraph)
-plt.show()
-draw_histogram(proGraph, 'b', "ProVaccine Degree Histogram")
 
-nx.draw(antiGraph)
-plt.show()
-draw_histogram(antiGraph, 'r', "AntiVaccine Degree Histogram")
-
-
-
-prodegrees = sorted([(node, deg) for node, deg in proGraph.degree()], key=lambda item: item[1], reverse=True)
-print(proGraph.in_degree(prodegrees[0][0]))
-print(proGraph.out_degree(prodegrees[0][0]))
-print(prodegrees[0][0])
+clustering = nx.clustering(proGraph)
+clustSort = sorted([deg for node, deg in clustering.items()], reverse=True)
+print(clustSort)
